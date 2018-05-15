@@ -1,6 +1,7 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include"base91.h"
 
 const char b91[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -82,15 +83,48 @@ int converter_para_b91(char* arquivo_entrada, char* arquivo_saida){
 	fclose(arquivo);
 	fclose(resultado);
 
+	return 0;
+}
 
+int converter(char operacao, char* arquivo_entrada, char* arquivo_saida) {
+	switch(operacao) {
+		case 'c':
+		case 'C': 
+			converter_para_b91(arquivo_entrada, arquivo_saida);
+			break;
+		case 'd':
+		case 'D':
+			converter_para_txt(arquivo_entrada, arquivo_saida);
+			break;
+		default:
+			printf("Operacao invalida.\n");
+			return 1;
+	}
 
 	return 0;
 }
 
 
-int main(int argc, char const *argv[])
-{
-	converter_para_txt("b91.txt", "resultado.txt");
+int main(int argc, char const *argv[]) {
+	
+	char arquivo_entrada[250], arquivo_saida[250], operacao;
+
+	if(argc == 4) {
+		converter(argv[1][0], (char*) argv[2], (char*) argv[3]);
+	}
+	else {
+		printf("Operacao (C/D): ");
+		scanf("%c", &operacao);
+		getchar();
+		printf("Nome do arquivo de entrada: ");
+		scanf ("%[^\n]s", arquivo_entrada);
+		getchar();
+		printf("Nome do arquivo de saida: ");
+		scanf ("%[^\n]s", arquivo_saida);
+		getchar();
+
+		converter(operacao, arquivo_entrada, arquivo_saida);
+	}
 	//converter_para_b91("texto.txt", "resultado.txt");
 }
 
