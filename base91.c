@@ -1,28 +1,48 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include"base91.h"
+
+const char b91[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					"abcdefghijklmnopqrstuvwxyz"
+					"0123456789"
+					"!#$>?@[]^_`{|}~\"%&()*+,./:;<=" ;
+
+int converter_para_txt(char* arquivo_entrada, char* arquivo_saida){
+	FILE *arquivo, *resultado;
+	arquivo = fopen(arquivo_entrada, "r");
+	resultado = fopen(arquivo_saida, "w");
+	char leitura[2];
+	int sair;
 
 
+	while((sair = (fread(leitura, sizeof(uint8_t), 2 , arquivo)) > 0)){
+		int x = encontrar_x(leitura[0],leitura[1]);
+		printf("x= %d\n", x);
+		fwrite(&x , 1 , 1, resultado);
+	}
+	return 0 ;
+}
+int encontrar_x(char char_divisao, char char_modulo){
+	int divisao, modulo;
+	for(int i =0; i< 92; i++){
+		if(b91[i] == char_divisao)
+			divisao = i;
+		if(b91[i] == char_modulo)
+			modulo = i;
+	}
+	return divisao*91 + modulo;
+}
 
-
-
-
-
-
-int main(int argc, char const *argv[])
-{
+int converter_para_b91(char* arquivo_entrada, char* arquivo_saida){
 	FILE *arquivo, *resultado;
 	uint8_t b[13];
 	int c[8];
 	int t;
 	// tabela
-	const char b91[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                      "abcdefghijklmnopqrstuvwxyz"
-                      "0123456789"
-                      "!#$>?@[]^_`{|}~\"%&()*+,./:;<=" ;
 
-	arquivo = fopen("arquivo.txt", "r");
-	resultado = fopen("resultado.txt", "w");
+	arquivo = fopen(arquivo_entrada, "r");
+	resultado = fopen(arquivo_saida, "w");
 
 
 	while((t = fread(b, sizeof(uint8_t), 13, arquivo)) > 0)
@@ -52,50 +72,25 @@ int main(int argc, char const *argv[])
 		c[7] = (((uint16_t)(b[11] & 0x1F)) << 8) | ((uint16_t)b[12]);
 
 
-		printf("%d\n", c[0]);
-		printf("%d\n", c[1]);
-		printf("%d\n", c[2]);
-		printf("%d\n", c[3]);
-		printf("%d\n", c[4]);
-		printf("%d\n", c[5]);
-		printf("%d\n", c[6]);
-		printf("%d\n", c[7]);
-
-
-		fwrite(&b91[(c[0]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[0]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[1]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[1]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[2]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[2]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[3]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[3]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[4]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[4]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[5]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[5]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[6]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[6]%91)] , 1 , 1, resultado);
-
-		fwrite(&b91[(c[7]/91)] , 1 , 1, resultado);
-		fwrite(&b91[(c[7]%91)] , 1 , 1, resultado);
+		for(int i = 0; i<8; i++){
+			fwrite(&b91[(c[i]/91)] , 1 , 1, resultado);
+			fwrite(&b91[(c[i]%91)] , 1 , 1, resultado);
+		}
+		
 	}
 
 	fclose(arquivo);
 	fclose(resultado);
 
-	// printf("%s\n", b);
-
-	// t = strlen(vetor);
-
-	// printf("%d\n", t);
 
 
 	return 0;
 }
+
+
+int main(int argc, char const *argv[])
+{
+	converter_para_txt("b91.txt", "resultado.txt");
+	//converter_para_b91("texto.txt", "resultado.txt");
+}
+
