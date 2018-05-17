@@ -12,7 +12,7 @@
  *      - Laís Mendes Gonçalves
  *		- Caio Oliveira
  *		- Adriano Torres
- *		- Nícolas
+ *		- Nícolas Machado Schumacher
  *
  *
  *  Copyright © 2018 UnB. All rights reserved.

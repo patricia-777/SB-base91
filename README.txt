@@ -5,7 +5,7 @@
 	- Laís Mendes Gonçalves
 	- Caio Oliveira
 	- Adriano Torres
-	- Nícolas
+	- Nícolas Machado Schumacher
 
 Como rodar o programa (forma 1):
 	1) No terminal digite --> gcc base91.c
