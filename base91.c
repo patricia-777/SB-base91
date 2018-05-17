@@ -1,3 +1,24 @@
+/*
+ *  Universidade de Brasília
+ *  Instituto de Ciencias Exatas
+ *  Departamento de Ciência da Computação
+ *
+ *  Software Básico - Turma A - 1/2018
+ *
+ *  Base 91
+ *
+ *  Grupo:
+ *      - Felipe Augusto R. Brandão
+ *      - Laís Mendes Gonçalves
+ *		- Caio Oliveira
+ *		- Adriano Torres
+ *		- Nícolas
+ *
+ *
+ *  Copyright © 2018 UnB. All rights reserved.
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,45 +32,158 @@ const char b91[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int converter_para_txt(char* arquivo_entrada, char* arquivo_saida){
 	FILE *arquivo, *resultado;
+	uint8_t b[13];
+	char c[16];
+	int vetor[8];
+
 	arquivo = fopen(arquivo_entrada, "r");
 	resultado = fopen(arquivo_saida, "w");
-	char leitura[2];
+	// arquivo = fopen("saida.txt", "r");
+	// resultado = fopen("decodificado.txt", "wb");
+	char leitura[16];
 	int sair;
 
+	while((sair = fread(c, sizeof(uint8_t), 16 , arquivo)) > 0){
+		int tamanho_vetor, n;
+		int tamanho_for = 13;
+	
+		tamanho_vetor = encontrar_x(c, sair, vetor);
+		
+		
 
-	while((sair = (fread(leitura, sizeof(uint8_t), 2 , arquivo)) > 0)){
-		int x = encontrar_x(leitura[0],leitura[1]);
-		printf("x= %d\n", x);
-		fwrite(&x , 1 , 1, resultado);
+		if (sair != 16)
+		{
+			tamanho_for = (tamanho_vetor*13)/8;
+			
+		}
+		else
+		{	
+			n = (tamanho_vetor * 13)%8;
+			if ((vetor[7] == (8191-n)) || (vetor[7] == 8183))
+			{
+				tamanho_for = tamanho_for-2;
+			}
+			else if(b[12]==13)
+			{
+				tamanho_for = 12;
+			}
+		}
+		
+
+		b[0] = (uint8_t)(vetor[0] >> 5);
+		b[1] = (uint8_t)((vetor[0] << 3) | (vetor[1] >> 10));
+		b[2] = (uint8_t)(vetor[1] >> 2);
+		b[3] = (uint8_t)((vetor[1] << 6) | (vetor[2] >> 7));
+		b[4] = (uint8_t)((vetor[2] << 1) | (vetor[3] >> 12));
+		b[5] = (uint8_t)(vetor[3] >> 4);
+		b[6] = (uint8_t)((vetor[3] << 4) | (vetor[4] >> 9));
+		b[7] = (uint8_t)(vetor[4] >> 1);
+		b[8] = (uint8_t)((vetor[4] << 12) | (vetor[5] >> 6));
+		b[9] = (uint8_t)((vetor[5] << 2) | (vetor[6] >> 11));
+		b[10] = (uint8_t)(vetor[6] >> 3);
+		b[11] = (uint8_t)((vetor[6] << 5) | (vetor[7] >> 8));
+		b[12] = (uint8_t)vetor[7];
+
+		if ((b[2]==0) || (b[5]==0)|| (b[7]==0)|| (b[10]==0))
+		{
+			tamanho_for--;
+		}
+
+		for (int i = 0; i < tamanho_for; ++i)
+		{
+			fwrite(&b[i] , sizeof(uint8_t) , 1, resultado);
+		}
 	}
 	return 0 ;
 }
-int encontrar_x(char char_divisao, char char_modulo){
-	int divisao, modulo;
-	for(int i =0; i< 92; i++){
-		if(b91[i] == char_divisao)
-			divisao = i;
-		if(b91[i] == char_modulo)
-			modulo = i;
+int encontrar_x(char* c, int tamanho, int* vetor){
+	int divisao, modulo, contador_vetor = 0;
+	char char_divisao, char_modulo;
+
+
+	for (int i = 0; i < tamanho; i = i+2)
+	{
+		char_divisao = c[i];
+		char_modulo = c[i+1];
+
+		for(int i =0; i< 92; i++){
+			if(b91[i] == char_divisao)
+				divisao = i;
+			if(b91[i] == char_modulo)
+				modulo = i;
+		}
+
+		vetor[contador_vetor] = (divisao*91 + modulo);
+		
+		contador_vetor++;
 	}
-	return divisao*91 + modulo;
+	return contador_vetor;
 }
 
-int converter_para_b91(char* arquivo_entrada, char* arquivo_saida){
+void converter_para_b91(char* arquivo_entrada, char* arquivo_saida){
 	FILE *arquivo, *resultado;
 	uint8_t b[13];
-	int c[8];
-	int t;
+	uint16_t c[8];
+	int t, tamanho_for, n;
+	int tag_igual = 1;
 	// tabela
 
-	arquivo = fopen(arquivo_entrada, "r");
+	arquivo = fopen(arquivo_entrada, "rb");
 	resultado = fopen(arquivo_saida, "w");
 
+	// arquivo = fopen("texto.txt", "rb");
+	// resultado = fopen("saida.txt", "w");
 
-	while((t = fread(b, sizeof(uint8_t), 13, arquivo)) > 0)
+
+	while((!feof(arquivo)) && ((t = fread(b, sizeof(uint8_t), 13, arquivo)) > 0))
 	{
+		int tamanho;
+
+		tamanho = t%13;
+		tamanho_for = tamanho;
+		
+
+		if (tamanho != 0)
+		{
+			b[t] = (b[t] & 0x00);
+
+
+			if (tamanho != 12)
+			{
+				b[t+1] = (b[t+1] & 0x00);
+			}
+
+			if (tamanho == 12)
+			{
+				b[12] = 0x0D;
+			}
+
+			if ((tamanho == 3) || (tamanho == 4) || (tamanho == 5))
+			{
+				tamanho_for -= 1;
+			}
+			else if ((tamanho == 6) || (tamanho == 7))
+			{
+				tamanho_for -= 2;
+			}
+			else if ((tamanho == 8) || (tamanho == 9) || (tamanho == 10))
+			{
+				tamanho_for -= 3;
+			}
+			else if ((tamanho == 11) || (tamanho == 12))
+			{
+				tamanho_for -= 4;
+			}
+		}
+		else
+		{
+			tamanho_for=8;
+			tag_igual = 0;
+		}
+		
+
 		///1 grupo de 13bits
-		c[0] = (uint32_t)(((uint16_t)b[0]) << 5 | ((uint16_t)(b[1] & 0xF8)) >> 3);
+		c[0] = (((uint16_t)b[0]) << 5 | ((uint16_t)(b[1] & 0xF8)) >> 3);
 
 		///2 grupo de 13bits
 		c[1] = (((uint16_t)(b[1] & 0x07)) << 10) | (((uint16_t)b[2]) << 2) | (((uint16_t)(b[3] & 0xC0)) >> 6);
@@ -73,17 +207,36 @@ int converter_para_b91(char* arquivo_entrada, char* arquivo_saida){
 		c[7] = (((uint16_t)(b[11] & 0x1F)) << 8) | ((uint16_t)b[12]);
 
 
-		for(int i = 0; i<8; i++){
-			fwrite(&b91[(c[i]/91)] , 1 , 1, resultado);
-			fwrite(&b91[(c[i]%91)] , 1 , 1, resultado);
+		for(int i = 0; i<tamanho_for; i++){
+
+			// if (t==12)
+			// {
+			// 	printf(" c->b91: %d\n", c[i]);
+			// 	fwrite(&b91[(c[i]/91)] , 1 , 1, resultado);
+			// 	fwrite(&b91[(c[i]%91)] , 1 , 1, resultado);
+			// }
+			// else if ((tamanho != 13) && (i == tamanho_for-1))
+			// {
+			// 	n = ((tamanho*13)%8);
+			// 	n = 8191 - n;
+			// 	printf(" c->b91[complemento]: %d\n", n);
+			// 	//colocando o simbolo phi
+			// 	fwrite(&b91[(n/91)] , 1 , 1, resultado);
+			// 	fwrite(&b91[(n%91)] , 1 , 1, resultado);
+
+			// }
+			// else
+			// {
+				
+				fwrite(&b91[(c[i]/91)] , 1 , 1, resultado);
+				fwrite(&b91[(c[i]%91)] , 1 , 1, resultado);
+			// }
 		}
-		
 	}
 
 	fclose(arquivo);
 	fclose(resultado);
-
-	return 0;
+	
 }
 
 int converter(char operacao, char* arquivo_entrada, char* arquivo_saida) {
@@ -125,6 +278,5 @@ int main(int argc, char const *argv[]) {
 
 		converter(operacao, arquivo_entrada, arquivo_saida);
 	}
-	//converter_para_b91("texto.txt", "resultado.txt");
 }
 
